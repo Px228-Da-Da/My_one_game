@@ -1,0 +1,286 @@
+import pygame
+import sys
+import os
+import json
+
+
+# File to store settings
+settings_file_path = os.path.join(os.path.expanduser("~"), "Documents", "My Games", "test_game", "settings.json")
+
+# Function to load settings from file
+def load_settings():
+    if os.path.exists(settings_file_path):
+        with open(settings_file_path, "r") as file:
+            settings = json.load(file)
+            return settings
+    return {"music_volume": 0.5}  # Default settings
+
+# Function to save settings to file
+def save_settings(settings):
+    os.makedirs(os.path.dirname(settings_file_path), exist_ok=True)
+    with open(settings_file_path, "w") as file:
+        json.dump(settings, file)
+
+
+# Инициализация Pygame
+pygame.init()
+pygame.mixer.init()
+
+# Получение размеров экрана
+SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
+
+# Цвета
+WHITE = (255, 255, 255)
+PINK = (255, 89, 118)
+GRAY = (22, 67, 128)
+
+# Создание экрана
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+pygame.display.set_caption("Игра на Pygame")
+
+# Установка стандартного курсора
+pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+# Загрузка фоновой картинки
+background_image = pygame.image.load("fon.png")
+background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Загрузка изображений кнопок
+button_normal = pygame.image.load("assets/ui (new)/menu_button.png")
+button_pressed = pygame.image.load("assets/ui (new)/menu_button_press.png")
+
+# Размеры кнопок
+button_width = 200
+button_height = 50
+
+# Масштабирование изображений кнопок
+button_normal = pygame.transform.scale(button_normal, (button_width, button_height))
+button_pressed = pygame.transform.scale(button_pressed, (button_width, button_height))
+
+# Загрузка изображения для настроек
+settings_image = pygame.image.load("assets/ui (new)/menu_settings.png")
+settings_image = pygame.transform.scale(settings_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Загрузка изображения для управления звуком
+sound_control_image = pygame.image.load("Новый проект (3).png")
+sound_control_image = pygame.transform.scale(sound_control_image, (300, 85))
+
+# Загрузка изображения для плазунка
+slider_image = pygame.image.load("scroll.png")
+slider_image = pygame.transform.scale(slider_image, (30, 60))
+
+# Загрузка изображения для кнопок изменения громкости
+increase_button_image = pygame.image.load("increase_button.png")
+decrease_button_image = pygame.image.load("decrease_button.png")
+
+# Масштабирование изображений кнопок изменения громкости
+increase_button_image = pygame.transform.scale(increase_button_image, (40, 40))
+decrease_button_image = pygame.transform.scale(decrease_button_image, (40, 40))
+
+# Инициализация звуков
+pygame.mixer.music.load("your_background_music.mp3")
+pygame.mixer.music.set_volume(0.5)
+sound_effect = pygame.mixer.Sound("your_sound_effect.mp3")
+sound_effect.set_volume(0.5)
+
+# Глобальные переменные управления звуком
+music_volume = 0.5
+effect_volume = 0.5
+
+# Глобальные переменные для управления звуком в настройках
+sound_cursor_rect = pygame.Rect(0, 0, 30, 60)  # Изменил размеры sound_cursor_rect
+sound_control_rect = pygame.Rect(0, 0, 400, 85)  # Изменил размеры sound_control_rect
+
+# Флаги для управления кнопками
+increase_button_pressed = False
+decrease_button_pressed = False
+
+# Функция отрисовки кнопок и названия игры
+def draw_interface():
+    # Отрисовка фона
+    screen.blit(background_image, (0, 0))
+
+    # Отрисовка названия игры
+    font_title = pygame.font.Font(None, 72)
+    title_text = font_title.render("ВАШЕ НАЗВАНИЕ ИГРЫ", True, PINK)
+    screen.blit(title_text, ((SCREEN_WIDTH - title_text.get_width()) // 2, 50))
+
+    # Расположение кнопок
+    start_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 - 50, button_width, button_height)
+    exit_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 150, button_width, button_height)
+    settings_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 50, button_width, button_height)
+
+    # Проверка наведения мыши на кнопки и изменение изображения кнопок
+    start_button_image = button_pressed if start_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    exit_button_image = button_pressed if exit_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    settings_button_image = button_pressed if settings_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+
+    # Отрисовка кнопок
+    screen.blit(start_button_image, (start_button_rect.x, start_button_rect.y))
+    screen.blit(settings_button_image, (settings_button_rect.x, settings_button_rect.y))
+    screen.blit(exit_button_image, (exit_button_rect.x, exit_button_rect.y))
+
+    # Отрисовка текста на кнопках
+    font_button = pygame.font.Font(None, 36)
+    start_text = font_button.render("Играть", True, GRAY)
+    settings_text = font_button.render("Настройки", True, GRAY)
+    exit_text = font_button.render("Выйти", True, GRAY)
+
+    screen.blit(start_text, (start_button_rect.centerx - start_text.get_width() // 2, start_button_rect.centery - start_text.get_height() // 2))
+    screen.blit(settings_text, (settings_button_rect.centerx - settings_text.get_width() // 2, settings_button_rect.centery - settings_text.get_height() // 2))
+    screen.blit(exit_text, (exit_button_rect.centerx - exit_text.get_width() // 2, exit_button_rect.centery - exit_text.get_height() // 2))
+
+# Функция отрисовки экрана настроек
+def draw_settings():
+    global sound_cursor_rect, sound_control_rect, music_volume
+    screen.blit(settings_image, (0, 0))
+
+    # Расположение кнопки закрытия
+    close_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2 + 500, SCREEN_HEIGHT // 2 - 150, button_width, button_height)
+    close_button_image = button_pressed if close_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    screen.blit(close_button_image, (close_button_rect.x, close_button_rect.y))
+
+    # Расположение элементов управления звуком
+    sound_control_rect = pygame.Rect((SCREEN_WIDTH - 900) // 2, SCREEN_HEIGHT // 2 - 350, 270, 85) # 300
+    sound_cursor_rect = pygame.Rect(sound_control_rect.x + int(music_volume * (sound_control_rect.width - sound_cursor_rect.width)), sound_control_rect.y + 13, 30, 60)  # Изменил расположение sound_cursor_rect
+
+    # Отрисовка фона управления звуком
+    screen.blit(sound_control_image, (sound_control_rect.x, sound_control_rect.y))
+
+    # Отрисовка плазунка
+    screen.blit(slider_image, (sound_cursor_rect.x, sound_cursor_rect.y))  # Установим плазунок под текст
+
+    # Отрисовка текста настроек
+    font_title = pygame.font.Font(None, 72)
+    title_text = font_title.render("Настройки", True, PINK)
+    screen.blit(title_text, ((SCREEN_WIDTH - title_text.get_width()) // 2, 50))
+
+    # Отрисовка текста на кнопке закрытия
+    font_button = pygame.font.Font(None, 36)
+    close_text = font_button.render("Закрыть", True, GRAY)
+    screen.blit(close_text, (close_button_rect.centerx - close_text.get_width() // 2, close_button_rect.centery - close_text.get_height() // 2))
+    # Load settings from the file
+    settings = load_settings()
+    music_volume = settings.get("music_volume", 0.5)
+
+    # Display the current volume settings
+    font_text = pygame.font.Font(None, 36)
+    volume_text = font_text.render(f"Громкость: {int(music_volume * 100)}%", True, GRAY)
+    screen.blit(volume_text, (sound_control_rect.x + 10, sound_control_rect.y + 10))
+
+
+# Главный игровой цикл
+running = True
+in_settings = False
+clock = pygame.time.Clock()
+
+# Воспроизведение музыки перед входом в цикл
+pygame.mixer.music.play()
+
+# Глобальные переменные управления звуком
+settings = load_settings()
+music_volume = settings.get("music_volume", 0.5)
+effect_volume = 0.5
+
+
+while running:
+    for event in pygame.event.get():
+        if in_settings:
+            # Обработка событий для управления курсором звука
+            if increase_button_pressed:
+                music_volume = min(1, music_volume + 0.1)
+                pygame.mixer.music.set_volume(music_volume)
+                settings["music_volume"] = music_volume
+
+            if decrease_button_pressed:
+                music_volume = max(0, music_volume - 0.1)
+                pygame.mixer.music.set_volume(music_volume)
+                settings["music_volume"] = music_volume
+            
+            # Handle mouse motion for slider movement
+            if event.type == pygame.MOUSEMOTION:
+                mouse_x, _ = event.pos
+                if pygame.mouse.get_pressed()[0]:
+                    if sound_control_rect.collidepoint(mouse_x, sound_cursor_rect.centery):
+                        sound_cursor_rect.x = mouse_x - sound_cursor_rect.width // 2
+                        sound_cursor_rect.x = max(sound_control_rect.x, min(sound_control_rect.x + sound_control_rect.width - sound_cursor_rect.width, sound_cursor_rect.x))
+                        music_volume = (sound_cursor_rect.x - sound_control_rect.x) / (sound_control_rect.width - sound_cursor_rect.width)
+                        music_volume = max(0, min(1, music_volume))
+                        pygame.mixer.music.set_volume(music_volume)
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_x, mouse_y = event.pos
+            start_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 - 50, button_width, button_height)
+            settings_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 50, button_width, button_height)
+            exit_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 150, button_width, button_height)
+            close_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2 + 500, SCREEN_HEIGHT // 2 - 150, button_width, button_height)
+
+            if start_button_rect.collidepoint(mouse_x, mouse_y):
+                print("Игра начата!")
+            elif settings_button_rect.collidepoint(mouse_x, mouse_y):
+                in_settings = True
+            elif exit_button_rect.collidepoint(mouse_x, mouse_y):
+                running = False
+            elif in_settings and close_button_rect.collidepoint(mouse_x, mouse_y):
+                in_settings = False
+                save_settings(settings)  # Save settings when closing the settings menu
+
+        # Обработка событий для управления кнопками
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                increase_button_pressed = True
+            elif event.key == pygame.K_DOWN:
+                decrease_button_pressed = True
+
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_UP:
+                increase_button_pressed = False
+            elif event.key == pygame.K_DOWN:
+                decrease_button_pressed = False
+
+    if in_settings:
+        # Обработка событий для управления курсором звука
+        if increase_button_pressed:
+            music_volume = min(1, music_volume + 0.1)
+            pygame.mixer.music.set_volume(music_volume)
+
+        if decrease_button_pressed:
+            music_volume = max(0, music_volume - 0.1)
+            pygame.mixer.music.set_volume(music_volume)
+
+        # Обработка событий для управления кнопками в настройках
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if pygame.mouse.get_pressed()[0]:
+            if sound_control_rect.collidepoint(mouse_x, mouse_y):
+                sound_cursor_rect.x = mouse_x - sound_cursor_rect.width // 2
+                sound_cursor_rect.x = max(sound_control_rect.x, min(sound_control_rect.x + sound_control_rect.width - sound_cursor_rect.width, sound_cursor_rect.x))
+                music_volume = (sound_cursor_rect.x - sound_control_rect.x) / (sound_control_rect.width - sound_cursor_rect.width)
+                music_volume = max(0, min(1, music_volume))
+                pygame.mixer.music.set_volume(music_volume)
+
+            # Проверяем, были ли нажаты кнопки изменения громкости
+            elif sound_control_rect.x - 50 <= mouse_x <= sound_control_rect.x and sound_control_rect.y <= mouse_y <= sound_control_rect.y + sound_control_rect.height:
+                # Кнопка уменьшения громкости
+                music_volume = max(0, music_volume - 0.1)
+                pygame.mixer.music.set_volume(music_volume)
+            elif sound_control_rect.x + sound_control_rect.width <= mouse_x <= sound_control_rect.x + sound_control_rect.width + 50 and sound_control_rect.y <= mouse_y <= sound_control_rect.y + sound_control_rect.height:
+                # Кнопка увеличения громкости
+                music_volume = min(1, music_volume + 0.1)
+                pygame.mixer.music.set_volume(music_volume)
+
+        # Update sound_cursor_rect position based on music_volume
+        sound_cursor_rect.x = sound_control_rect.x + int(music_volume * (sound_control_rect.width - sound_cursor_rect.width))
+        draw_settings()
+    else:
+        draw_interface()
+
+    # Отображение изменений
+    pygame.display.flip()
+
+    # Ожидание
+    clock.tick(30)  # 30 кадров в секунду
+
+# Завершение работы Pygame
+pygame.quit()
+sys.exit()

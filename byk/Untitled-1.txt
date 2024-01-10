@@ -1,0 +1,146 @@
+import pygame
+import sys
+
+# Инициализация Pygame
+pygame.init()
+
+# Получение размеров экрана
+SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
+
+# Цвета
+WHITE = (255, 255, 255)
+PINK = (255, 89, 118)
+GRAY = (22, 67, 128)
+
+# Создание экрана
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+pygame.display.set_caption("Игра на Pygame")
+
+# Установка стандартного курсора
+pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+# Загрузка фоновой картинки
+background_image = pygame.image.load("fon.png")
+background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Загрузка изображений кнопок
+button_normal = pygame.image.load("assets/ui (new)/menu_button.png")
+button_pressed = pygame.image.load("assets/ui (new)/menu_button_press.png")
+
+# Размеры кнопок
+button_width = 200
+button_height = 50
+
+# Масштабирование изображений кнопок
+button_normal = pygame.transform.scale(button_normal, (button_width, button_height))
+button_pressed = pygame.transform.scale(button_pressed, (button_width, button_height))
+
+# Загрузка изображения для настроек
+settings_image = pygame.image.load("assets/ui (new)/menu_settings.png")
+settings_image = pygame.transform.scale(settings_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Громкость
+volume_game = 50
+volume_effects = 50
+
+# Функция отрисовки кнопок и названия игры
+def draw_interface():
+    # Отрисовка фона
+    screen.blit(background_image, (0, 0))
+
+    # Отрисовка названия игры
+    font_title = pygame.font.Font(None, 72)
+    title_text = font_title.render("ВАШЕ НАЗВАНИЕ ИГРЫ", True, PINK)
+    screen.blit(title_text, ((SCREEN_WIDTH - title_text.get_width()) // 2, 50))
+
+    # Расположение кнопок
+    start_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 - 50, button_width, button_height)
+    exit_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 150, button_width, button_height)
+    settings_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 50, button_width, button_height)
+
+    # Проверка наведения мыши на кнопки и изменение изображения кнопок
+    start_button_image = button_pressed if start_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    exit_button_image = button_pressed if exit_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    settings_button_image = button_pressed if settings_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+
+    # Отрисовка кнопок
+    screen.blit(start_button_image, (start_button_rect.x, start_button_rect.y))
+    screen.blit(settings_button_image, (settings_button_rect.x, settings_button_rect.y))
+    screen.blit(exit_button_image, (exit_button_rect.x, exit_button_rect.y))
+
+    # Отрисовка текста на кнопках
+    font_button = pygame.font.Font(None, 36)
+    start_text = font_button.render("Играть", True, GRAY)
+    settings_text = font_button.render("Настройки", True, GRAY)
+    exit_text = font_button.render("Выйти", True, GRAY)
+
+    screen.blit(start_text, (start_button_rect.centerx - start_text.get_width() // 2, start_button_rect.centery - start_text.get_height() // 2))
+    screen.blit(settings_text, (settings_button_rect.centerx - settings_text.get_width() // 2, settings_button_rect.centery - settings_text.get_height() // 2))
+    screen.blit(exit_text, (exit_button_rect.centerx - exit_text.get_width() // 2, exit_button_rect.centery - exit_text.get_height() // 2))
+
+# Функция отрисовки экрана настроек
+def draw_settings():
+    screen.blit(settings_image, (0, 0))
+
+    # Расположение кнопки закрытия
+    close_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2 + 500, SCREEN_HEIGHT // 2 - 150, button_width, button_height)
+    close_button_image = button_pressed if close_button_rect.collidepoint(pygame.mouse.get_pos()) else button_normal
+    screen.blit(close_button_image, (close_button_rect.x, close_button_rect.y))
+
+    # Отрисовка текста настроек
+    font_title = pygame.font.Font(None, 72)
+    title_text = font_title.render("Настройки", True, PINK)
+    screen.blit(title_text, ((SCREEN_WIDTH - title_text.get_width()) // 2, 50))
+    
+    # Отрисовка текста на кнопке закрытия
+    font_button = pygame.font.Font(None, 36)
+    close_text = font_button.render("Закрыть", True, GRAY)
+    screen.blit(close_text, (close_button_rect.centerx - close_text.get_width() // 2, close_button_rect.centery - close_text.get_height() // 2))
+
+    # Отрисовка слайдера для громкости игры
+    pygame.draw.rect(screen, WHITE, (300, 200, 200, 20))
+    pygame.draw.rect(screen, PINK, (300 + volume_game * 2, 195, 10, 30))
+    font_slider = pygame.font.Font(None, 24)
+    volume_game_text = font_slider.render(f"Громкость игры: {volume_game}%", True, PINK)
+    screen.blit(volume_game_text, (250, 240))
+
+    # Отрисовка слайдера для громкости звуковых эффектов
+    pygame.draw.rect(screen, WHITE, (300, 300, 200, 20))
+    pygame.draw.rect(screen, PINK, (300 + volume_effects * 2, 295, 10, 30))
+    volume_effects_text = font_slider.render(f"Громкость эффектов: {volume_effects}%", True, PINK)
+    screen.blit(volume_effects_text, (250, 340))
+
+# Главный игровой цикл
+running = True
+in_settings = False
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_x, mouse_y = event.pos
+            start_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 - 50, button_width, button_height)
+            settings_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 50, button_width, button_height)
+            exit_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2, SCREEN_HEIGHT // 2 + 150, button_width, button_height)
+            close_button_rect = pygame.Rect((SCREEN_WIDTH - button_width) // 2 + 500, SCREEN_HEIGHT // 2 - 150, button_width, button_height)
+
+            if start_button_rect.collidepoint(mouse_x, mouse_y):
+                print("Игра начата!")
+            elif settings_button_rect.collidepoint(mouse_x, mouse_y):
+                in_settings = True
+            elif exit_button_rect.collidepoint(mouse_x, mouse_y):
+                running = False
+            elif in_settings and close_button_rect.collidepoint(mouse_x, mouse_y):
+                in_settings = False
+
+    if in_settings:
+        draw_settings()
+    else:
+        draw_interface()
+
+    # Отображение изменений
+    pygame.display.flip()
+
+# Завершение работы Pygame
+pygame.quit()
+sys.exit()
