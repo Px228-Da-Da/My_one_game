@@ -11,6 +11,7 @@ stamina = 10
 max_stamina = 40
 
 walls = []
+barriers = []
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
@@ -81,6 +82,26 @@ class Player(pygame.sprite.Sprite):
             self.current_frame = (self.current_frame + 1) % len(self.idle_frames)
 
 
+
+class Barrier(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, message):
+        super().__init__()
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.message = message
+
+    def display_message(self, screen):
+        font = pygame.font.Font(None, 36)
+        text_surface = font.render(self.message, True, WHITE)
+        text_width, text_height = text_surface.get_size()
+        background_surface = pygame.Surface((text_width + 20, text_height + 20), pygame.SRCALPHA)
+        pygame.draw.rect(background_surface, (0, 0, 0, 150), (0, 0, text_width + 20, text_height + 20))
+        background_surface.blit(text_surface, (10, 10))
+        screen.blit(background_surface, ((SCREEN_WIDTH - text_width - 20) // 2, SCREEN_HEIGHT - text_height - 40))
+
+
+
+
 def draw_walls(walls):
     for wall in walls:
         screen.blit(wall.image, wall.rect.topleft)
@@ -91,7 +112,7 @@ def create_wall(x, y, width, height):
     walls.append(wall)
 
 
-def create_help_msg(text_help, image_keyboard_help=None):
+def create_help_msg(text_help, x, y, image_keyboard_help=None):
     font = pygame.font.Font(None, 36)
     text_surface = font.render(text_help, True, WHITE)
     text_width, text_height = text_surface.get_size()
@@ -102,14 +123,83 @@ def create_help_msg(text_help, image_keyboard_help=None):
     if image_keyboard_help:
         background_surface.blit(image_keyboard_help, (text_width + 30, (text_height - image_keyboard_help.get_height()) // 2 + 10))
 
-    center_x, center_y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
-    hint_x = center_x - (text_width + 20) // 2
-    hint_y = center_y - (text_height + 20) // 2
-
-    screen.blit(background_surface, (hint_x, hint_y))
+    screen.blit(background_surface, (x, y))
 
 
-def play_game(running, walls, player):
+
+def Home(running, walls, player, barriers):
+    global current_frame, walk_animation_timer, player_facing_left
+    walk_animation_timer = 0
+    player_x, player_y = SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 150
+    player_width, player_height = 40, 20
+    player_speed = 8
+    running_speed = 12
+    stamina = 10
+    max_stamina = 40
+
+    # Load the level image
+    level_image = pygame.image.load("assets/levels/level_test_1.png")
+    level_image = pygame.transform.scale(level_image, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2))
+
+    # Define the rectangle to center the level image within
+    level_rect = level_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+
+        player.update(keys, walls)
+
+        screen.blit(background_game_image, (0, 0))
+        screen.blit(level_image, level_rect)
+        # create_help_msg("Use WASD keys to move")
+        create_help_msg("Use WASD keys to move", 750, 470)
+
+        create_help_msg("<", 100, 470)
+
+        draw_walls(walls)
+        player.draw(screen)
+
+        # Check if the player touches any barriers
+        for barrier in barriers:
+            if player.rect.colliderect(barrier.rect):
+                barrier.display_message(screen)
+                if keys[pygame.K_e]:  # Check if the player presses 'E'
+                    # Move the player to a new location (change these coordinates accordingly)
+                    player.rect.topleft = (500, 500)
+                    # Call the level function with the new player location
+                    start_level_1(running, walls, player, barriers)
+
+        pygame.draw.rect(screen, (66, 135, 245), (10, 10, player.stamina, 20))
+        pygame.draw.rect(screen, (0, 36, 94), (10 + player.stamina, 10, player.max_stamina - player.stamina, 20))
+
+        pygame.display.flip()
+        clock.tick(10)
+
+        screen.fill((0, 0, 0))
+
+        create_wall(692, 300, 400, 50)
+        create_wall(1083, 300, 200, 200)
+        create_wall(640, 787, 610, 50)
+        create_wall(1253, 300, 40, 500)
+        create_wall(640, 300, 56, 300)
+        create_wall(640, 590, 110, 113)
+        create_wall(863, 590, 110, 113)
+        create_wall(1083, 590, 200, 113)
+
+        # Create a barrier with a message
+        barrier = Barrier(692, 300, 100, 50, "Press 'E' to teleport")
+        barriers.append(barrier)
+
+    pygame.quit()
+    sys.exit()
+
+
+
+def start_level_1(running, walls, player, barriers):
     global current_frame, walk_animation_timer, player_facing_left
     walk_animation_timer = 0
     player_x, player_y = SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 150
@@ -137,10 +227,18 @@ def play_game(running, walls, player):
 
         screen.blit(background_game_image, (0, 0))
         screen.blit(level_image, level_rect)
-        create_help_msg("Use WASD keys to move")
+        # create_help_msg("Use WASD keys to move")
 
         draw_walls(walls)
         player.draw(screen)
+
+        # Check if the player touches any barriers
+        for barrier in barriers:
+            if player.rect.colliderect(barrier.rect):
+                barrier.display_message(screen)
+                if keys[pygame.K_e]:  # Check if the player presses 'E'
+                    # Move the player to a new location (change these coordinates accordingly)
+                    player.rect.topleft = (100, 100)
 
         pygame.draw.rect(screen, (66, 135, 245), (10, 10, player.stamina, 20))
         pygame.draw.rect(screen, (0, 36, 94), (10 + player.stamina, 10, player.max_stamina - player.stamina, 20))
@@ -161,6 +259,9 @@ def play_game(running, walls, player):
 
     pygame.quit()
     sys.exit()
+
+
+
 
 
 
@@ -257,7 +358,7 @@ background_game_image = pygame.transform.scale(background_game_image, (SCREEN_WI
 knight_idle_frames = [pygame.transform.scale(pygame.image.load(f"assets\heroes\knight/knight_idle_anim_f{i}.png"), (50, 50)) for i in range(6)]
 knight_walk_frames = [pygame.transform.scale(pygame.image.load(f"assets\heroes\knight/knight_run_anim_f{i}.png"), (50, 50)) for i in range(6)]
 walk_animation_speed = 100
-current_frame = 0
+current_frame = 1
 
 player = Player(SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 150, 40, 20, knight_walk_frames, knight_idle_frames)
 
@@ -283,7 +384,7 @@ while running:
             sound_button_rect = pygame.Rect(10, 10, sound_icon_size, sound_icon_size)
 
             if start_button_rect.collidepoint(mouse_x, mouse_y):
-                play_game(running, walls, player)
+                Home(running, walls, player, barriers)
             elif exit_button_rect.collidepoint(mouse_x, mouse_y):
                 running = False
             elif sound_button_rect.collidepoint(mouse_x, mouse_y):
